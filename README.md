@@ -3,14 +3,6 @@
 
 # auctime
 
-<!-- badges: start -->
-
-[![Lifecycle:
-experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![CRAN
-status](https://www.r-pkg.org/badges/version/auctime)](https://CRAN.R-project.org/package=auctime)
-<!-- badges: end -->
-
 The goal of `auctime` is to provide an easy and reproducible way of
 calculating incremental area under the curve calculations (iAUC) for
 biomarkers which have measurements taken over at intervals over time.
@@ -135,13 +127,13 @@ output$input
 ```
 
 ``` r
-# output for subject 1
-output$subjects[[1]]
+# output for subject 3
+output$subjects[[3]]
 #> $AUC
-#> [1] 233.4681
+#> [1] 7.840711
 #> 
 #> $intervalAUC
-#> [1] 47.52680 34.00450 54.95836 61.37644 35.60204
+#> [1] 0.0000000 1.6892595 5.7807034 0.3707482 0.0000000
 #> 
 #> $plot
 ```

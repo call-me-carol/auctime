@@ -15,11 +15,6 @@ knitr::opts_chunk$set(
 
 # auctime
 
-<!-- badges: start -->
-[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![CRAN status](https://www.r-pkg.org/badges/version/auctime)](https://CRAN.R-project.org/package=auctime)
-<!-- badges: end -->
-
 The goal of `auctime` is to provide an easy and reproducible way of calculating incremental area under the curve calculations (iAUC) for biomarkers which have measurements taken over at intervals over time. This quantity represents the effect of a treatment on the total concentration of a biomarker.
 
 This is different from the AUC that results from calculation of area under a receiver operating characteristic (ROC) curve, which represents the accuracy of binary classifier.
@@ -81,8 +76,8 @@ output$input
 ```
 
 ```{r example output subjects}
-# output for subject 1
-output$subjects[[1]]
+# output for subject 3
+output$subjects[[3]]
 ```
 
 ```{r example output dataframe}
