@@ -11,48 +11,81 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 status](https://www.r-pkg.org/badges/version/auctime)](https://CRAN.R-project.org/package=auctime)
 <!-- badges: end -->
 
-The goal of auctime is to …
+The goal of `auctime` is to provide an easy and reproducible way of
+calculating incremental area under the curve calculations (iAUC) for
+biomarkers which have measurements taken over at intervals over time.
+This quantity represents the effect of a treatment on the total
+concentration of a biomarker.
+
+This is different from the AUC that results from calculation of area
+under a receiver operating characteristic (ROC) curve, which represents
+the accuracy of binary classifier.
 
 ## Installation
 
-You can install the development version of auctime like so:
+You can install the `auctime` package from GitHub with:
 
 ``` r
-# FILL THIS IN! HOW CAN PEOPLE INSTALL YOUR DEV PACKAGE?
+devtools::install_github("scrs-msu/auctime")
+
+library(auctime)
 ```
+
+## Methods
+
+Several methods are included in calcAUC to find the area under the
+curve. All methods of calculation use the trapezoidal rule to
+interpolate between data points.
+
+-   `positive` sums area that is above the baseline (first) measurement,
+    ignoring any area below the baseline (Wolever & Jenkins, 1986)
+
+-   `net` subtracts the area below baseline from the area above baseline
+    (Le Floch et al., 1990)
+
+-   `total` is the area with respect to ground (a baseline of 0)
 
 ## Example
 
-This is a basic example which shows you how to solve a common problem:
+Data should be labeled with the biomarker name and timepoint in the
+format `Biomarker_Time`, with subjects’ measurements in rows:
 
 ``` r
-library(auctime)
-## basic example code
+set.seed(1234)
+
+measurements <- data.frame(Biomarker_0 = rnorm(10,50,20),
+                           Biomarker_1 = rnorm(10,70,20),
+                           Biomarker_2 = rnorm(10,90,20),
+                           Biomarker_3 = rnorm(10,90,20),
+                           Biomarker_4 = rnorm(10,70,20),
+                           Biomarker_5 = rnorm(10,60,20))
+
+head(measurements)
+#>   Biomarker_0 Biomarker_1 Biomarker_2 Biomarker_3 Biomarker_4 Biomarker_5
+#> 1   25.858685    60.45615    92.68176   112.04595    98.98993    23.87937
+#> 2   55.548585    50.03227    80.18628    80.48814    48.62715    48.35848
+#> 3   71.688824    54.47492    81.18904    75.81120    52.89271    37.82221
+#> 4    3.086046    71.28918    99.19179    79.97484    64.38754    39.70076
+#> 5   58.582494    89.18988    76.12560    57.41813    50.11320    56.75381
+#> 6   60.121118    67.79429    61.03590    66.64761    50.62971    71.26112
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`?
-You can include R chunks like so:
+Use `calcAUC()` to calculate area under the curve:
 
 ``` r
-summary(cars)
-#>      speed           dist       
-#>  Min.   : 4.0   Min.   :  2.00  
-#>  1st Qu.:12.0   1st Qu.: 26.00  
-#>  Median :15.0   Median : 36.00  
-#>  Mean   :15.4   Mean   : 42.98  
-#>  3rd Qu.:19.0   3rd Qu.: 56.00  
-#>  Max.   :25.0   Max.   :120.00
+output <- calcAUC(data = measurements)
 ```
 
-You’ll still need to render `README.Rmd` regularly, to keep `README.md`
-up-to-date. `devtools::build_readme()` is handy for this. You could also
-use GitHub Actions to re-render `README.Rmd` every time you push. An
-example workflow can be found here:
-<https://github.com/r-lib/actions/tree/v1/examples>.
+`calcAUC()` produces output containing input data and arguments,
+subject-wise calculations and plots, a data frame of calculations, and a
+plot grid of all subjects:
 
-You can also embed plots, for example:
+``` r
+output$input
 
-<img src="man/figures/README-pressure-1.png" width="100%" />
+output$subjects
 
-In that case, don’t forget to commit and push the resulting figure
-files, so they display on GitHub and CRAN.
+output$dataframe
+
+output$multiplot
+```

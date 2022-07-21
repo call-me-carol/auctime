@@ -1,16 +1,25 @@
 Type: Package
 Package: auctime
-Title: What the Package Does (Title Case)
+Title: Calculate Incremental Area Under the Curve
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line) Use four
-    spaces when indenting paragraphs within the Description.
+Author: person(c("Sally", "K."), "Slipher", , "sallyslipher@montana.edu",
+    role = c("aut"))
+Description: Calculate an incremental trapezoidal area under the curve for
+    biomarkers measured at a series of time points, with the first
+    timepoint being a baseline measurement. This is a summary measure that
+    captures the total magnitude of a response over a specified time
+    interval; it is an estimate of total concentration.
 License: MIT + file LICENSE
+URL: https://github.com/scrs-msu/auctime
+BugReports: https://github.com/scrs-msu/auctime/issues
+Imports: 
+    cowplot,
+    dplyr,
+    ggplot2,
+    tidyr
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
-URL: https://github.com/scrs-msu/auctime
-BugReports: https://github.com/scrs-msu/auctime/issues
+RoxygenNote: 7.2.0
