@@ -30,13 +30,17 @@ You can install the `auctime` package from GitHub with:
 
 ```{r eval=FALSE}
 devtools::install_github("scrs-msu/auctime")
+```
 
+You can load the package with:
+
+```{r}
 library(auctime)
 ```
 
 ## Methods
 
-Several methods are included in calcAUC to find the area under the curve. All methods of calculation use the trapezoidal rule to interpolate between data points.
+Several methods are included in calcAUC to find the area under the curve. All methods use the trapezoidal rule to interpolate between data points.
 
  - `positive` sums area that is above the baseline (first) measurement, ignoring any area below the baseline (Wolever & Jenkins, 1986)
 
@@ -46,11 +50,12 @@ Several methods are included in calcAUC to find the area under the curve. All me
 
 ## Example
 
-Data should be labeled with the biomarker name and timepoint in the format `Biomarker_Time`, with subjects' measurements in rows:
+Data should be labeled with the biomarker name and timepoint in the format `Biomarker_Time`. Each row is a subject's measurements. For example:
 
 ```{r example data}
 set.seed(1234)
 
+# simulate some data
 measurements <- data.frame(Biomarker_0 = rnorm(10,50,20),
                            Biomarker_1 = rnorm(10,70,20),
                            Biomarker_2 = rnorm(10,90,20),
@@ -58,23 +63,28 @@ measurements <- data.frame(Biomarker_0 = rnorm(10,50,20),
                            Biomarker_4 = rnorm(10,70,20),
                            Biomarker_5 = rnorm(10,60,20))
 
+# view simulated data
 head(measurements)
 ```
 
 Use `calcAUC()` to calculate area under the curve:
 
-```{r example use, eval=FALSE}
+```{r example use}
 output <- calcAUC(data = measurements)
 ```
 
-`calcAUC()` produces output containing input data and arguments, subject-wise calculations and plots, a data frame of calculations, and a plot grid of all subjects:
+`calcAUC()` produces output containing input data and arguments, subject-wise calculations and plots, a data frame of calculations, and a grid of plots for all subjects:
 
-```{r example output, eval=FALSE}
+```{r example output}
+# input data
 output$input
 
-output$subjects
+# output for subject 1
+output$subjects[[1]]
 
+# output data
 output$dataframe
 
+# plot grid
 output$multiplot
 ```

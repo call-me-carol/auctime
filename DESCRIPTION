@@ -2,8 +2,8 @@ Type: Package
 Package: auctime
 Title: Calculate Incremental Area Under the Curve
 Version: 0.1.0
-Author: person(c("Sally", "K."), "Slipher", , "sallyslipher@montana.edu",
-    role = c("aut"))
+Author: Sally K. Slipher [aut,cr]
+Maintainer: Sally K. Slipher <sallyslipher@montana.edu>
 Description: Calculate an incremental trapezoidal area under the curve for
     biomarkers measured at a series of time points, with the first
     timepoint being a baseline measurement. This is a summary measure that

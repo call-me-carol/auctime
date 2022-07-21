@@ -7,6 +7,8 @@
 ribbonize(.data, .x, .y, .f)
 }
 \arguments{
+\item{.data}{a data frame with columns for x-coordinates, y-coordinates, and function}
+
 \item{.x}{x-coordinates of a function, for two functions to shade between}
 
 \item{.y}{y-coordinates of a function, for two functions to shade between}

@@ -2,3 +2,7 @@
 
 export(calcAUC)
 export(ribbonize)
+import(cowplot)
+import(dplyr)
+import(ggplot2)
+import(tidyr)

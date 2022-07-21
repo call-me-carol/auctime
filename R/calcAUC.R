@@ -12,6 +12,11 @@
 #'
 #' @return Nested lists of input data containing subject-wise calculations (summed AUC, AUC for each interval, plot of the AUC curve), a data frame of summed AUCs, and a plot matrix of AUC curves.
 #'
+#' @import dplyr
+#' @import tidyr
+#' @import ggplot2
+#' @import cowplot
+#'
 #' @examples
 #' measurements <- data.frame(
 #' Biomarker_0 = rnorm(10,50,20),
@@ -32,7 +37,11 @@
 #' Subject = 1:10,
 #' Biomarker_4 = rnorm(10,60,20))
 #'
-#' output <- calcAUC(data = measurements, method = "total", subjects = TRUE, interval = "minute", plot = FALSE)
+#' output <- calcAUC(data = measurements,
+#' method = "total",
+#' subjects = TRUE,
+#' interval = "minute",
+#' plot = FALSE)
 #'
 #' @references Brouns et al., 2005
 #' @references Wolever & Jenkins, 1986
@@ -40,7 +49,11 @@
 #' @references Weeding, 2016
 #' @references Grantham, 2022
 #'
+#' @author Sally K. Slipher <sallyslipher@montana.edu>
+#'
 #' @export
+
+#globalVariables(c("x", "f", "ymin", "ymax", "yend"))
 
 calcAUC <- function(data,
                     biomarker = NULL,
@@ -419,11 +432,15 @@ calcAUC <- function(data,
 #'
 #' @description calculate the ribbons required for geom_ribbon() to shade between two lines
 #'
+#' @param .data a data frame with columns for x-coordinates, y-coordinates, and function
 #' @param .x x-coordinates of a function, for two functions to shade between
 #' @param .y y-coordinates of a function, for two functions to shade between
 #' @param .f a two-level factor, indicates whether a set of x- and y- coordinates belongs to function "a" or function "b"
 #'
 #' @return a tibble with 4 variables: x, x-coordinates and interpolated points for both functions; ymax, corresponding y-coordinates for the upper-bound of shading; ymin, corresponding y-coordinates for the lower-bound of shading; fill, a logical variable to indicate if an interval is shaded or not
+#'
+#' @import dplyr
+#' @import tidyr
 #'
 #' @examples
 #' df <- tibble(
@@ -440,6 +457,8 @@ calcAUC <- function(data,
 #' @author Neal Grantham, <https://www.nsgrantham.com/fill-between-two-lines-ggplot2>
 #'
 #' @export
+
+#globalVariables(c(":=", "a", "b", "d", "lag_fill", "lead_fill", "u", "v", "x", "x1", "x2", "x3", "x4", "y", "y1", "y2", "y3", "y4", "ymax", "ymin"))
 
 ribbonize <- function(.data, .x, .y, .f) {
 

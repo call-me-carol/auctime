@@ -55,7 +55,11 @@ Biomarker_5 = rnorm(10,70,20),
 Subject = 1:10,
 Biomarker_4 = rnorm(10,60,20))
 
-output <- calcAUC(data = measurements, method = "total", subjects = TRUE, interval = "minute", plot = FALSE)
+output <- calcAUC(data = measurements,
+method = "total",
+subjects = TRUE,
+interval = "minute",
+plot = FALSE)
 
 }
 \references{
@@ -68,4 +72,7 @@ Le Floch et al., 1990
 Weeding, 2016
 
 Grantham, 2022
+}
+\author{
+Sally K. Slipher <sallyslipher@montana.edu>
 }
