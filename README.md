@@ -132,7 +132,9 @@ output$input
 #> 8     44.53293
 #> 9     92.11819
 #> 10    36.84383
+```
 
+``` r
 # output for subject 1
 output$subjects[[1]]
 #> $AUC
@@ -144,7 +146,7 @@ output$subjects[[1]]
 #> $plot
 ```
 
-<img src="man/figures/README-example output-1.png" width="100%" />
+<img src="man/figures/README-example output subjects-1.png" width="100%" />
 
 ``` r
 # output data
@@ -160,9 +162,11 @@ output$dataframe
 #> 8        8     85.312078
 #> 9        9    142.427134
 #> 10      10    233.008219
+```
 
+``` r
 # plot grid
 output$multiplot
 ```
 
-<img src="man/figures/README-example output-2.png" width="100%" />
+<img src="man/figures/README-example output multiplot-1.png" width="100%" />

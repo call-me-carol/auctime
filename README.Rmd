@@ -75,16 +75,22 @@ output <- calcAUC(data = measurements)
 
 `calcAUC()` produces output containing input data and arguments, subject-wise calculations and plots, a data frame of calculations, and a grid of plots for all subjects:
 
-```{r example output}
+```{r example output input}
 # input data
 output$input
+```
 
+```{r example output subjects}
 # output for subject 1
 output$subjects[[1]]
+```
 
+```{r example output dataframe}
 # output data
 output$dataframe
+```
 
+```{r example output multiplot}
 # plot grid
 output$multiplot
 ```
