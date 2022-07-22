@@ -166,7 +166,7 @@ calcAUC <- function(data,
       if (i==1) {
         #G1>G0
         if (G[2]>G[1])
-        {intervalAUC[i] <- (G[2]-G[1]*(t[2]-t[1])/2)}
+        {intervalAUC[i] <- (G[2]-G[1])*(t[2]-t[1])/2}
         #otherwise
         else {intervalAUC[i] <- 0}
       }
@@ -175,7 +175,7 @@ calcAUC <- function(data,
       else {
         #Gx>=G0 & Gx-1>=G0
         if (G[i+1]>=G[1] && G[i]>=G[1])
-        {intervalAUC[i] <- (((G[i+1]-G[1])/2)+(G[i]-G[1]))*(t[i+1]-t[i])/2}
+        {intervalAUC[i] <- (((G[i+1]-G[1])/2)+(G[i]-G[1])/2)*(t[i+1]-t[i])/2}
         #Gx>=G0 & Gx-1<G0
         else if (G[i+1]>=G[1] && G[i]<G[1])
         {intervalAUC[i] <- ((G[i+1]-G[1])^2/(G[i+1]-G[i]))*(t[i+1]-t[i])/2}
