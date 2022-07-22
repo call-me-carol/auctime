@@ -2,13 +2,15 @@
 #'
 #' @description Calculate an incremental trapezoidal area under the curve for biomarkers measured at a series of time points, with the first timepoint being a baseline measurement. This is a summary measure that captures the total magnitude of a response over a specified time interval; it is an estimate of total concentration.
 #'
-#' @param data A data frame of observed measurements, with columns being a series of time points for a biomarker (in the format `biomarker_timepoint`, where time point is a number), and rows being subjects. May or may not contain a column of subject IDs.
+#' @param data A data frame of observed measurements, with columns being a series of time points for a biomarker (in the format "biomarker_timepoint", where time point is a number), and rows being subjects. May or may not contain a column of subject IDs.
 #' @param biomarker The name of the biomarker to calculate AUC on. This should match the column labels in the data frame (see `data`), and is not case sensitive. The function will automatically locate all columns labeled with this biomarker and use those time points in increasing numerical order, with the first time point being used as the baseline measurement. If `NULL`, it will use all columns in the dataset, excluding a sibject column (if present).
 #' @param method Indicates which method of calculation to use when finding the area under the curve. All sum the area of all trapezoids formed using consecutive time points and their response value, with the first measurement used as baseline (except the `total` method). If a time point is missing in a series, it is skipped and a trapezoid is calculated between the nearest available time points, which has an interval width equal to the distance between those points. `positive` is the default method and only sums area that is above the baseline measurement, ignoring any area below the baseline (Wolever & Jenkins, 1986). `net` is the net area (or increase in area) and subtracts the area below baseline from the area above baseline (Le Floch et al., 1990). `total` is the total area under the curve. This calculates the area with respect to ground (a baseline of 0 instead of the first time point).
-#' @param subjects Indicates whether there is a column for subject ID present in the data. If `TRUE`, the function will automatically locate a column named `subject` (not case sensitive) and use those IDs. If `FALSE`, subjects will be automatically labeled with integers 1, 2, ..., (and any column named `subject` will be ignored). If given an integer, it will use that column number as a column of subject IDs.
-#' @param interval Indicates the unit for the width of the intervals. All intervals are assumed to be the same width. The default width is `hour`, 1 hour. Other options are `minute` (1 minute intervals), or `halfhour` (1 half hour). To achieve interval widths that are different than 1 unit, time points should be labeled as such. For example, to achieve 5 minute intervals, the interval argument is set to `minute` and the time points in the data columns names called `biomarker_0`, `biomarker_5`, `biomarker_10`, ... .
+#' @param subjects Indicates whether there is a column for subject ID present in the data. If `TRUE`, the function will automatically locate a column named "subject"(s) (not case sensitive) and use those IDs. If `FALSE`, subjects will be automatically labeled with integers 1, 2, ..., (and any column named "subject" will be ignored). If given an integer, it will use that column number as a column of subject IDs.
+#' @param lods Indicates which values to impute for any observations with measurements below the level of detection. Imputed values will be halfway between (the average of) the specified value and 0. Measurements that are below level of detection should be recorded as "LOD", "BELOW", or a text string "NA". If `TRUE`, the function will locate a column of values, named with the biomarker and "detect" (not case sensitive; suggested that this column is named "biomarker_detection"). Data will be imputed subject-wise. If `FALSE`, any data measured as below detection limit will be imputed with 0 for all subjects (if a "biomarker_detection" column is present, it will be ignored). If `lods` is a numeric value, imputed measurements will use that value for all subjects (if a "biomarker_detection" column is present, it will be ignored). This argument does not accept a vector of values.
+#' @param interval Indicates the unit for the width of the intervals. All intervals are assumed to be the same width. The default width is `hours`, 1 hour. Other options are `minutes` (1 minute intervals), or `halfhours` (1 half hour). To achieve interval widths that are different than 1 unit, time points should be labeled as such. For example, to achieve 5 minute intervals, the interval argument is set to `minute` and the time points in the data columns names called "biomarker_0", "biomarker_5", "biomarker_10", ... .
 #' @param plot Indicated whether to produce plots along with AUC calculation (`TRUE`) or only perform the calculation (`FALSE`). Turning off plots saves on computing time.
-#' @param sort Indicates if plot grid containing all subject plots should be sorted by calculated AUC value. If `FALSE`, subject plots will be sorted by subject ID (default); if `increaasing`, plots will be sorted by lowest AUC first and highest AUC last; if `decreasing`, plots will be sorted by highest AUC first and lowest AUC last.
+#' @param sort Indicates if plot grid containing all subject plots should be sorted by calculated AUC value. If `FALSE`, subject plots will be sorted by subject ID (default); if `increasing`, plots will be sorted by lowest AUC first and highest AUC last; if `decreasing`, plots will be sorted by highest AUC first and lowest AUC last.
+#' @param interpolate Indicates whether to linearly interpolate any missing values (`TRUE`), or to remove subjects who have any missing values (`FALSE`). Regarless, subjects missing measurements for either the first or last time point are removed.
 #'
 #' @return Nested lists of input data containing subject-wise calculations (summed AUC, AUC for each interval, plot of the AUC curve), a data frame of summed AUCs, and a plot matrix of AUC curves.
 #'
@@ -28,21 +30,6 @@
 #'
 #' output <- calcAUC(data = measurements)
 #'
-#' measurements <- data.frame(
-#' Biomarker_2 = rnorm(10,50,20),
-#' Biomarker_1 = rnorm(10,70,20),
-#' Biomarker_6 = rnorm(10,90,20),
-#' Biomarker_3 = rnorm(10,90,20),
-#' Biomarker_5 = rnorm(10,70,20),
-#' Subject = 1:10,
-#' Biomarker_4 = rnorm(10,60,20))
-#'
-#' output <- calcAUC(data = measurements,
-#' method = "total",
-#' subjects = TRUE,
-#' interval = "minute",
-#' plot = FALSE)
-#'
 #' @references Brouns et al., 2005
 #' @references Wolever & Jenkins, 1986
 #' @references Le Floch et al., 1990
@@ -53,15 +40,21 @@
 #'
 #' @export
 
-#globalVariables(c("x", "f", "ymin", "ymax", "yend"))
-
 calcAUC <- function(data,
                     biomarker = NULL,
                     method = "positive",
                     subjects = FALSE,
-                    interval = "hour",
+                    lods = FALSE,
+                    interval = "hours",
                     plot = TRUE,
-                    sort = FALSE) {
+                    sort = FALSE,
+                    interpolate = TRUE) {
+  
+  # require(readxl)
+  # require(dplyr)
+  # require(tidyr)
+  # require(ggplot2)
+  # require(cowplot)
 
   ################### DATA & FORMATTING ###################
 
@@ -92,7 +85,30 @@ calcAUC <- function(data,
   } else {errorCondition("Biomarker not found. The argument `biomarker` should be a biomarker name or NULL.")}
 
   biomarker <- unlist(strsplit(colnames(data)[1], "_"))[1] # read name from column names for biomarker label
-
+  
+  # find detection limit variable, store values and subset data 
+  
+  if (sum(grepl("detect", colnames(data), ignore.case = TRUE))>0 & ncol(data)==1) {errorCondition(paste("No time point data. Only data for biomarker", biomarker, "is detection limit variable."))} # error if no time points, data is only the detection limit column
+  
+  if (lods==TRUE) {
+    lod <- data %>% select(contains("detect", ignore.case = TRUE)) %>% unlist %>% as.vector() # select column with variable "detect(ion)"
+    data <- data %>% select(!contains("detect", ignore.case = TRUE)) # remove detection column from data
+  } else if (is.numeric(lods) & length(lods)==1) {
+    lod <- rep(lods, length(subject)) # use same value for all subjects (only uses single value, not a vector of lods)
+    data <- data %>% select(!contains("detect", ignore.case = TRUE)) # make sure no detection column in data
+  } else if (lods==FALSE) {
+    lod <- rep(0, length(subject)) # use 0 for all subjects (but assumes there are no observations below detection limit)
+    data <- data %>% select(!contains("detect", ignore.case = TRUE)) # make sure no detection column in data
+  } else {errorCondition("The argument `lods` should be a single value, `TRUE` to locate a column of values, or `FALSE`.")}
+  
+  lod <- rowMeans(cbind(lod, rep(0, length(lod))), na.rm=TRUE) # use halfway between lod and 0 for imputation
+  
+  # impute values below detection limit
+  
+  data <- data %>% mutate_each(funs(ifelse(. == "NA", lod, .))) # replace text "NA" with lod value
+  data <- data %>% mutate_each(funs(ifelse(. == "LOD", lod, .))) # replace text "LOD" with lod value
+  data <- data %>% mutate_each(funs(ifelse(. == "BELOW", lod, .))) # replace text "BELOW" with lod value
+  
   # sort variables by increasing order of time point, create time point labels
 
   time <- unlist(strsplit(colnames(data),"_"))[seq(from = 2, to = length(colnames(data))*2, by = 2)] # labels
@@ -103,36 +119,62 @@ calcAUC <- function(data,
 
   # index time points
 
-  t <- 0:(length(time)-1) # index of time points
-  n <- length(t)-1 # number of intervals
+  # t <- 0:(length(time)-1) # index of time points
+  t <- time # vector of time points
+  n <- length(time)-1 # number of intervals
 
   # check there is at least 2 time point variables
 
   if (length(time)==1) {errorCondition(paste("Only 1 time point detected, need 2 or more for AUC calculation."))}
   if (length(time)==0) {errorCondition(paste("No time points detected, need 2 or more for AUC calculation."))}
 
-  # impute missing values
+  # remove subjects with missing values for first or last time point
+  
+  keep <- !is.na(data[,1]) & !is.na(data[,ncol(data)]) # which subjects kept
+  data <- data %>% filter(!is.na(data[,1]) & !is.na(data[,ncol(data)])) # remove subjects
+  remove <- length(subject) - nrow(data) # number of subjects removed
+  
+  if (length(subject)!=nrow(data)) {message(paste("Removed",remove,"subject(s) with missing first or last measurement."))}
 
-  data[sapply(data, `%in%`, "NA")] <- NA # replace text "NA" with NA value
-  # data[sapply(data, `%in%`, "LOD")] <- NA # replace text "LOD" with lowest level of detection
-  # data[sapply(data, `%in%`, "MAX")] <- NA # replace text "MAX" with maximum level of detection
+  # re-index subject labels & lod values
+  
+  original <- subject
 
-  # remove subjects less than 2 observations
-
-  keep <- length(time) - rowSums(sapply(data, `%in%`, NA)) > 1 # subjects kept
-  remove <- nrow(data) - sum(keep) # number removed
-  data <- data[keep,] # data with subjects removed
-  message(paste("Removed",remove,"subject(s) with less than two available measurements."))
-
-  # re-index subject labels
-
-  if (subjects==FALSE) {subject <- 1:nrow(data)} else {subject <- subject[which(keep)]}
+  # if (subjects==FALSE) {subject <- 1:nrow(data)
+  # } else {subject <- subject[keep]}
+  
+  subject <- subject[keep]
+  
+  lod <- lod[keep]
+  
+  # remove subjects with any missing values if not interpolating
+  
+  if (interpolate==FALSE) {
+    
+    keep <- (rowSums(is.na(data))>0) == FALSE # which subjects kept
+    data <- data %>% filter((rowSums(is.na(data))>0) == FALSE) # remove subjects
+    removeall <- length(subject) - nrow(data) # number of subjects removed
+    
+    if (length(subject)!=nrow(data)) {message(paste("Removed",removeall,"additional subject(s) with missing values."))}
+    
+    remove <- remove+removeall
+    
+    # re-index subject labels & lod values
+    
+    # if (subjects==FALSE) {subject <- 1:nrow(data)
+    # } else {subject <- subject[keep]}
+    
+    subject <- subject[keep]
+    
+    lod <- lod[keep]
+    
+  }
 
   # label for interval width
 
-  if (interval=="hour") {interval <- "hours"}
-  if (interval=="minute") {interval <- "minutes"}
-  if (interval=="halfhour") {interval <- "half-hours"}
+  if (interval=="hours") {interval <- "hours"}
+  if (interval=="minutes") {interval <- "minutes"}
+  if (interval=="halfhours") {interval <- "half-hours"}
 
   ################### CALCULATION & PLOTTING ###################
 
@@ -148,20 +190,32 @@ calcAUC <- function(data,
   # loop through each subject for calculation
 
   for (j in 1:length(subject)) {
-
-    G <- as.numeric(data[j,]) # vector of responses for each time point ("positive" notation)
-    y <- as.numeric(data[j,]) # vector of responses for each time point ("net" notation)
-
+    
+    # initialize objects for storing results
+    
     intervalAUC <- vector() # initialize storage vector for area under curve of each interval
+    
+    # store measurements for current subject
+    
+    G <- as.numeric(data[j,]) # vector of responses for each time point ("positive" notation)
+    y <- as.numeric(data[j,]) # vector of responses for each time point ("net", "total" notation)
+    
+    # linearly interpolate measurements if any missing values
+    
+    Gpoints <- G
+    ypoints <- y
+    
+    G = approx(t, y, xout=t)$y
+    y = approx(t, y, xout=t)$y
 
-    ################### calculate positive AUC (Brouns et al., 2005) ###################
+    ################### POSITVE AUC (Brouns et al., 2005) ###################
 
     if (method=="positive") {
 
-    # loop through intervals for a subject
+    # loop through intervals for current subject
 
     for (i in 1:n) {
-
+      
       #x=1
       if (i==1) {
         #G1>G0
@@ -204,26 +258,27 @@ calcAUC <- function(data,
 
       curve <- tibble(x = t,
                       y = G,
-                      yend = G[1])
+                      yend = G[1],
+                      ypoints = Gpoints)
 
-      plotj <- ggplot(curve) +
+      plotj <- suppressWarnings(ggplot(curve) +
         geom_ribbon(data = ribbons, aes(x, ymin = ymin, ymax = ymax, fill = fill), alpha = 0.35) +
         geom_line(aes(x, y)) +
         geom_segment(aes(x = x, xend = x, y = y, yend = yend)) +
         geom_abline(slope = 0, intercept = G[1]) +
-        geom_point(aes(x, y)) +
+        geom_point(aes(x, ypoints)) +
         theme_light() +
         guides(fill = "none") +
         labs(x = paste("Time (", interval,")", sep = ""),
              y = "Response",
-             title = paste(biomarker, "\n", "Subject ", subject[j], "\n", "AUC = ", round(AUC,1), sep = "")) +
+             title = paste(biomarker, "\n", "Subject ", subject[j], "\n", "Positive AUC = ", round(AUC,1), sep = "")) +
         scale_fill_manual(values = c(ifelse(FALSE %in% ribbons$fill, "white", "darkgray"),
                                      ifelse(FALSE %in% ribbons$fill, "darkgray", "white"))) +
         theme(plot.title = element_text(hjust = 0.5),
-              panel.grid.minor = element_blank())
+              panel.grid.minor = element_blank()))
     }
 
-    # store calculations and plot for each subject
+    # store calculations and plot for current subject
 
     if(plot==TRUE) {output[[j]] <- list(AUC = AUC,
                                         intervalAUC = intervalAUC,
@@ -241,11 +296,11 @@ calcAUC <- function(data,
 
     }
 
-    ################### calculate total AUC (Weeding, 2016) ###################
+    ################### TOTAL AUC (Weeding, 2016) ###################
 
     if (method=="total") {
 
-      # loop through time points & responses for a subject
+      # loop through time points & responses for current subject
 
       for (i in 1:n) {
 
@@ -268,26 +323,27 @@ calcAUC <- function(data,
 
         curve <- tibble(x = t,
                         y = y,
-                        yend = 0)
+                        yend = 0,
+                        ypoints = ypoints)
 
-        plotj <- ggplot(curve) +
+        plotj <- suppressWarnings(ggplot(curve) +
           geom_ribbon(data = ribbons, aes(x, ymin = ymin, ymax = ymax, fill = fill), alpha = 0.35) +
           geom_line(aes(x, y)) +
           geom_segment(aes(x = x, xend = x, y = y, yend = yend)) +
           geom_abline(slope = 0, intercept = 0) +
-          geom_point(aes(x, y)) +
+          geom_point(aes(x, ypoints)) +
           theme_light() +
           guides(fill = "none") +
           labs(x = paste("Time (", interval,")", sep = ""),
                y = "Response",
-               title = paste(biomarker, "\n", "Subject ", subject[j], "\n", "AUC = ", round(AUC,1), sep = "")) +
+               title = paste(biomarker, "\n", "Subject ", subject[j], "\n", "Total AUC = ", round(AUC,1), sep = "")) +
           scale_fill_manual(values = c(ifelse(FALSE %in% ribbons$fill, "red", "darkgray"),
                                        ifelse(FALSE %in% ribbons$fill, "darkgray", "red"))) +
           theme(plot.title = element_text(hjust = 0.5),
-                panel.grid.minor = element_blank())
+                panel.grid.minor = element_blank()))
       }
 
-      # store calculations and plot for each subject
+      # store calculations and plot for current subject
 
       if(plot==TRUE) {output[[j]] <- list(AUC = AUC,
                                           intervalAUC = intervalAUC,
@@ -305,11 +361,11 @@ calcAUC <- function(data,
 
     }
 
-    ################### calculate net AUC (Weeding, 2016) ###################
+    ################### NET AUC (Weeding, 2016) ###################
 
     if (method=="net") {
 
-      # loop through time points & responses for a subject
+      # loop through time points & responses for current subject
 
       for (i in 1:n) {
 
@@ -336,26 +392,27 @@ calcAUC <- function(data,
 
         curve <- tibble(x = t,
                         y = y,
-                        yend = y[1])
+                        yend = y[1],
+                        ypoints = ypoints)
 
-        plotj <- ggplot(curve) +
+        plotj <- suppressWarnings(ggplot(curve) +
           geom_ribbon(data = ribbons, aes(x, ymin = ymin, ymax = ymax, fill = fill), alpha = 0.35) +
           geom_line(aes(x, y)) +
           geom_segment(aes(x = x, xend = x, y = y, yend = yend)) +
           geom_abline(slope = 0, intercept = y[1]) +
-          geom_point(aes(x, y)) +
+          geom_point(aes(x, ypoints)) +
           theme_light() +
           guides(fill = "none") +
           labs(x = paste("Time (", interval,")", sep = ""),
                y = "Response",
-               title = paste(biomarker, "\n", "Subject ", subject[j], "\n", "AUC = ", round(AUC,1), sep = "")) +
+               title = paste(biomarker, "\n", "Subject ", subject[j], "\n", "Net AUC = ", round(AUC,1), sep = "")) +
           scale_fill_manual(values = c(ifelse(FALSE %in% ribbons$fill, "red", "darkgray"),
                                        ifelse(FALSE %in% ribbons$fill, "darkgray", "red"))) +
           theme(plot.title = element_text(hjust = 0.5),
-                panel.grid.minor = element_blank())
+                panel.grid.minor = element_blank()))
       }
 
-      # store calculations and plot for each subject
+      # store calculations and plot for current subject
 
       if(plot==TRUE) {output[[j]] <- list(AUC = AUC,
                                           plot = plotj)
@@ -398,8 +455,17 @@ calcAUC <- function(data,
   }
 
   # reconstruct dataset used as input
-
-  inputdata <- cbind(Subject = subject, data)
+  
+  inputdata <- cbind(Subject = subject,
+                     X = lod,
+                     data)
+  colnames(inputdata)[2] <- paste(biomarker, "Detection", sep = "_") # biomarker specific name for variable
+  
+  # add removed subjects back into output data frame
+  
+  original <- data.frame(Subject = original)
+  
+  outputdf <- full_join(x = original, y = outputdf)
 
   # store calculation method used, input data
 
@@ -407,6 +473,7 @@ calcAUC <- function(data,
                biomarker = biomarker,
                subjects = nrow(inputdata),
                removed = remove,
+               interpolate = interpolate,
                timepoints = time,
                interval = interval,
                data = inputdata)
@@ -458,9 +525,10 @@ calcAUC <- function(data,
 #'
 #' @export
 
-#globalVariables(c(":=", "a", "b", "d", "lag_fill", "lead_fill", "u", "v", "x", "x1", "x2", "x3", "x4", "y", "y1", "y2", "y3", "y4", "ymax", "ymin"))
-
 ribbonize <- function(.data, .x, .y, .f) {
+  
+  # require(dplyr)
+  # require(tidyr)
 
   # Check there are only 2 level in .f
   levels <- .data %>%

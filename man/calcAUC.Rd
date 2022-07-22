@@ -9,25 +9,31 @@ calcAUC(
   biomarker = NULL,
   method = "positive",
   subjects = FALSE,
-  interval = "hour",
+  lods = FALSE,
+  interval = "hours",
   plot = TRUE,
-  sort = FALSE
+  sort = FALSE,
+  interpolate = TRUE
 )
 }
 \arguments{
-\item{data}{A data frame of observed measurements, with columns being a series of time points for a biomarker (in the format `biomarker_timepoint`, where time point is a number), and rows being subjects. May or may not contain a column of subject IDs.}
+\item{data}{A data frame of observed measurements, with columns being a series of time points for a biomarker (in the format "biomarker_timepoint", where time point is a number), and rows being subjects. May or may not contain a column of subject IDs.}
 
 \item{biomarker}{The name of the biomarker to calculate AUC on. This should match the column labels in the data frame (see `data`), and is not case sensitive. The function will automatically locate all columns labeled with this biomarker and use those time points in increasing numerical order, with the first time point being used as the baseline measurement. If `NULL`, it will use all columns in the dataset, excluding a sibject column (if present).}
 
 \item{method}{Indicates which method of calculation to use when finding the area under the curve. All sum the area of all trapezoids formed using consecutive time points and their response value, with the first measurement used as baseline (except the `total` method). If a time point is missing in a series, it is skipped and a trapezoid is calculated between the nearest available time points, which has an interval width equal to the distance between those points. `positive` is the default method and only sums area that is above the baseline measurement, ignoring any area below the baseline (Wolever & Jenkins, 1986). `net` is the net area (or increase in area) and subtracts the area below baseline from the area above baseline (Le Floch et al., 1990). `total` is the total area under the curve. This calculates the area with respect to ground (a baseline of 0 instead of the first time point).}
 
-\item{subjects}{Indicates whether there is a column for subject ID present in the data. If `TRUE`, the function will automatically locate a column named `subject` (not case sensitive) and use those IDs. If `FALSE`, subjects will be automatically labeled with integers 1, 2, ..., (and any column named `subject` will be ignored). If given an integer, it will use that column number as a column of subject IDs.}
+\item{subjects}{Indicates whether there is a column for subject ID present in the data. If `TRUE`, the function will automatically locate a column named "subject"(s) (not case sensitive) and use those IDs. If `FALSE`, subjects will be automatically labeled with integers 1, 2, ..., (and any column named "subject" will be ignored). If given an integer, it will use that column number as a column of subject IDs.}
 
-\item{interval}{Indicates the unit for the width of the intervals. All intervals are assumed to be the same width. The default width is `hour`, 1 hour. Other options are `minute` (1 minute intervals), or `halfhour` (1 half hour). To achieve interval widths that are different than 1 unit, time points should be labeled as such. For example, to achieve 5 minute intervals, the interval argument is set to `minute` and the time points in the data columns names called `biomarker_0`, `biomarker_5`, `biomarker_10`, ... .}
+\item{lods}{Indicates which values to impute for any observations with measurements below the level of detection. Imputed values will be halfway between (the average of) the specified value and 0. Measurements that are below level of detection should be recorded as "LOD", "BELOW", or a text string "NA". If `TRUE`, the function will locate a column of values, named with the biomarker and "detect" (not case sensitive; suggested that this column is named "biomarker_detection"). Data will be imputed subject-wise. If `FALSE`, any data measured as below detection limit will be imputed with 0 for all subjects (if a "biomarker_detection" column is present, it will be ignored). If `lods` is a numeric value, imputed measurements will use that value for all subjects (if a "biomarker_detection" column is present, it will be ignored). This argument does not accept a vector of values.}
+
+\item{interval}{Indicates the unit for the width of the intervals. All intervals are assumed to be the same width. The default width is `hours`, 1 hour. Other options are `minutes` (1 minute intervals), or `halfhours` (1 half hour). To achieve interval widths that are different than 1 unit, time points should be labeled as such. For example, to achieve 5 minute intervals, the interval argument is set to `minute` and the time points in the data columns names called "biomarker_0", "biomarker_5", "biomarker_10", ... .}
 
 \item{plot}{Indicated whether to produce plots along with AUC calculation (`TRUE`) or only perform the calculation (`FALSE`). Turning off plots saves on computing time.}
 
-\item{sort}{Indicates if plot grid containing all subject plots should be sorted by calculated AUC value. If `FALSE`, subject plots will be sorted by subject ID (default); if `increaasing`, plots will be sorted by lowest AUC first and highest AUC last; if `decreasing`, plots will be sorted by highest AUC first and lowest AUC last.}
+\item{sort}{Indicates if plot grid containing all subject plots should be sorted by calculated AUC value. If `FALSE`, subject plots will be sorted by subject ID (default); if `increasing`, plots will be sorted by lowest AUC first and highest AUC last; if `decreasing`, plots will be sorted by highest AUC first and lowest AUC last.}
+
+\item{interpolate}{Indicates whether to linearly interpolate any missing values (`TRUE`), or to remove subjects who have any missing values (`FALSE`). Regarless, subjects missing measurements for either the first or last time point are removed.}
 }
 \value{
 Nested lists of input data containing subject-wise calculations (summed AUC, AUC for each interval, plot of the AUC curve), a data frame of summed AUCs, and a plot matrix of AUC curves.
@@ -45,21 +51,6 @@ Biomarker_4 = rnorm(10,70,20),
 Biomarker_5 = rnorm(10,60,20))
 
 output <- calcAUC(data = measurements)
-
-measurements <- data.frame(
-Biomarker_2 = rnorm(10,50,20),
-Biomarker_1 = rnorm(10,70,20),
-Biomarker_6 = rnorm(10,90,20),
-Biomarker_3 = rnorm(10,90,20),
-Biomarker_5 = rnorm(10,70,20),
-Subject = 1:10,
-Biomarker_4 = rnorm(10,60,20))
-
-output <- calcAUC(data = measurements,
-method = "total",
-subjects = TRUE,
-interval = "minute",
-plot = FALSE)
 
 }
 \references{
