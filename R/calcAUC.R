@@ -49,7 +49,7 @@ calcAUC <- function(data,
                     plot = TRUE,
                     sort = FALSE,
                     interpolate = TRUE) {
-  
+
   # require(readxl)
   # require(dplyr)
   # require(tidyr)
@@ -85,11 +85,11 @@ calcAUC <- function(data,
   } else {errorCondition("Biomarker not found. The argument `biomarker` should be a biomarker name or NULL.")}
 
   biomarker <- unlist(strsplit(colnames(data)[1], "_"))[1] # read name from column names for biomarker label
-  
-  # find detection limit variable, store values and subset data 
-  
+
+  # find detection limit variable, store values and subset data
+
   if (sum(grepl("detect", colnames(data), ignore.case = TRUE))>0 & ncol(data)==1) {errorCondition(paste("No time point data. Only data for biomarker", biomarker, "is detection limit variable."))} # error if no time points, data is only the detection limit column
-  
+
   if (lods==TRUE) {
     lod <- data %>% select(contains("detect", ignore.case = TRUE)) %>% unlist %>% as.vector() # select column with variable "detect(ion)"
     data <- data %>% select(!contains("detect", ignore.case = TRUE)) # remove detection column from data
@@ -100,15 +100,15 @@ calcAUC <- function(data,
     lod <- rep(0, length(subject)) # use 0 for all subjects (but assumes there are no observations below detection limit)
     data <- data %>% select(!contains("detect", ignore.case = TRUE)) # make sure no detection column in data
   } else {errorCondition("The argument `lods` should be a single value, `TRUE` to locate a column of values, or `FALSE`.")}
-  
+
   lod <- rowMeans(cbind(lod, rep(0, length(lod))), na.rm=TRUE) # use halfway between lod and 0 for imputation
-  
+
   # impute values below detection limit
-  
-  data <- data %>% mutate_each(funs(ifelse(. == "NA", lod, .))) # replace text "NA" with lod value
-  data <- data %>% mutate_each(funs(ifelse(. == "LOD", lod, .))) # replace text "LOD" with lod value
-  data <- data %>% mutate_each(funs(ifelse(. == "BELOW", lod, .))) # replace text "BELOW" with lod value
-  
+
+  data <- data %>% across(funs(ifelse(. == "NA", lod, .))) # replace text "NA" with lod value
+  data <- data %>% across(funs(ifelse(. == "LOD", lod, .))) # replace text "LOD" with lod value
+  data <- data %>% across(funs(ifelse(. == "BELOW", lod, .))) # replace text "BELOW" with lod value
+
   # sort variables by increasing order of time point, create time point labels
 
   time <- unlist(strsplit(colnames(data),"_"))[seq(from = 2, to = length(colnames(data))*2, by = 2)] # labels
@@ -129,45 +129,45 @@ calcAUC <- function(data,
   if (length(time)==0) {errorCondition(paste("No time points detected, need 2 or more for AUC calculation."))}
 
   # remove subjects with missing values for first or last time point
-  
+
   keep <- !is.na(data[,1]) & !is.na(data[,ncol(data)]) # which subjects kept
   data <- data %>% filter(!is.na(data[,1]) & !is.na(data[,ncol(data)])) # remove subjects
   remove <- length(subject) - nrow(data) # number of subjects removed
-  
+
   if (length(subject)!=nrow(data)) {message(paste("Removed",remove,"subject(s) with missing first or last measurement."))}
 
   # re-index subject labels & lod values
-  
+
   original <- subject
 
   # if (subjects==FALSE) {subject <- 1:nrow(data)
   # } else {subject <- subject[keep]}
-  
+
   subject <- subject[keep]
-  
+
   lod <- lod[keep]
-  
+
   # remove subjects with any missing values if not interpolating
-  
+
   if (interpolate==FALSE) {
-    
+
     keep <- (rowSums(is.na(data))>0) == FALSE # which subjects kept
     data <- data %>% filter((rowSums(is.na(data))>0) == FALSE) # remove subjects
     removeall <- length(subject) - nrow(data) # number of subjects removed
-    
+
     if (length(subject)!=nrow(data)) {message(paste("Removed",removeall,"additional subject(s) with missing values."))}
-    
+
     remove <- remove+removeall
-    
+
     # re-index subject labels & lod values
-    
+
     # if (subjects==FALSE) {subject <- 1:nrow(data)
     # } else {subject <- subject[keep]}
-    
+
     subject <- subject[keep]
-    
+
     lod <- lod[keep]
-    
+
   }
 
   # label for interval width
@@ -190,21 +190,21 @@ calcAUC <- function(data,
   # loop through each subject for calculation
 
   for (j in 1:length(subject)) {
-    
+
     # initialize objects for storing results
-    
+
     intervalAUC <- vector() # initialize storage vector for area under curve of each interval
-    
+
     # store measurements for current subject
-    
+
     G <- as.numeric(data[j,]) # vector of responses for each time point ("positive" notation)
     y <- as.numeric(data[j,]) # vector of responses for each time point ("net", "total" notation)
-    
+
     # linearly interpolate measurements if any missing values
-    
+
     Gpoints <- G
     ypoints <- y
-    
+
     G = approx(t, y, xout=t)$y
     y = approx(t, y, xout=t)$y
 
@@ -215,7 +215,7 @@ calcAUC <- function(data,
     # loop through intervals for current subject
 
     for (i in 1:n) {
-      
+
       #x=1
       if (i==1) {
         #G1>G0
@@ -455,16 +455,16 @@ calcAUC <- function(data,
   }
 
   # reconstruct dataset used as input
-  
+
   inputdata <- cbind(Subject = subject,
                      X = lod,
                      data)
   colnames(inputdata)[2] <- paste(biomarker, "Detection", sep = "_") # biomarker specific name for variable
-  
+
   # add removed subjects back into output data frame
-  
+
   original <- data.frame(Subject = original)
-  
+
   outputdf <- full_join(x = original, y = outputdf)
 
   # store calculation method used, input data
@@ -526,7 +526,7 @@ calcAUC <- function(data,
 #' @export
 
 ribbonize <- function(.data, .x, .y, .f) {
-  
+
   # require(dplyr)
   # require(tidyr)
 
